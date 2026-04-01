@@ -1,1 +1,1 @@
-gunicorn script.server:app
+gunicorn server:app --chdir script

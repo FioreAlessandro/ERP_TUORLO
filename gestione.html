@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+    <style>/* ===== PAGINA GESTIONE ===== */
+
+.container{
+
+max-width:720px;
+margin:80px auto;
+
+background:rgba(2,37,11,0.85);
+backdrop-filter:blur(8px);
+
+padding:60px;
+
+border-radius:18px;
+
+box-shadow:
+0 20px 50px rgba(0,0,0,0.35),
+inset 0 1px 0 rgba(255,255,255,0.05);
+
+text-align:center;
+
+border:1px solid rgba(255,255,255,0.06);
+
+}
+
+
+h1{
+
+font-size:34px;
+margin-bottom:45px;
+font-weight:600;
+
+color:#f9fafb;
+letter-spacing:0.5px;
+
+}
+
+
+/* BOTTONI */
+
+.btn{
+
+display:block;
+width:280px;
+margin:18px auto;
+
+padding:18px;
+
+border:none;
+border-radius:12px;
+
+font-size:16px;
+font-weight:600;
+
+cursor:pointer;
+
+transition:all .25s ease;
+
+box-shadow:0 6px 14px rgba(0,0,0,0.25);
+
+}
+
+
+/* HOVER */
+
+.btn:hover{
+
+transform:translateY(-3px);
+
+box-shadow:
+0 12px 25px rgba(0,0,0,0.35),
+0 0 0 1px rgba(255,255,255,0.08) inset;
+
+}
+
+
+/* AGGIUNGI */
+
+.btn.aggiungi{
+
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+color:white;
+
+}
+
+
+/* RIMUOVI */
+
+.btn.rimuovi{
+
+background:linear-gradient(135deg,#ef4444,#dc2626);
+color:white;
+
+}
+
+
+/* MODIFICA */
+
+.btn.modifica{
+
+background:linear-gradient(135deg,#f59e0b,#d97706);
+color:white;
+
+}
+
+
+/* TORNA */
+
+.btn.indietro{
+
+background:linear-gradient(135deg,#e5e7eb,#d1d5db);
+color:#111827;
+
+}
+
+
+/* HOVER LIGHT BUTTON */
+
+.btn.indietro:hover{
+
+background:linear-gradient(135deg,#f3f4f6,#e5e7eb);
+
+}</style>
+
+<head>
+
+<title>Gestione Anagrafiche</title>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Gestione Clienti / Prodotti</h1>
+
+<div class="menu">
+
+<button class="btn aggiungi" onclick="location.href='/nuovo'">
+➕ Aggiungi
+</button>
+<br><br>
+<button class="btn rimuovi" onclick="location.href='/rimuovi'">
+🗑 Rimuovi
+</button>
+
+<br><br>
+
+<button class="btn cliente" onclick="location.href='/modifica'">
+✏ Modifica
+</button>
+<br><br>
+<button class="btn back" onclick="location.href='/menu_ddt'">
+⬅ Torna indietro
+</button>
+
+</div>
+
+</body>
+</html>

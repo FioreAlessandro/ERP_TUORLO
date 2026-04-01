@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Dettaglio Pedane</title>
+
+<style>
+body{
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+    padding:20px;
+}
+.pedana{
+    background:#1f2937;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+}
+input{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+}
+button{
+    width:100%;
+    padding:15px;
+    background:green;
+    color:white;
+    border:none;
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="container"></div>
+
+<button onclick="generaDDT()">Genera DDT</button>
+
+<script>
+
+// ⚠️ IMPORTANTE: valore sicuro
+let pedane = {{ ordine.pedane if ordine.pedane else 1 }};
+
+// crea pedane
+for(let i=1;i<=pedane;i++){
+
+    document.getElementById("container").innerHTML += `
+    <div class="pedana">
+
+        <h3>Pedana ${i}</h3>
+
+        Tot casse:
+        <input type="number" id="tot_${i}">
+
+        Quanti lotti ci sono?:
+        <input type="number" id="gruppi_${i}" onchange="generaGruppi(${i})">
+
+        <div id="box_${i}"></div>
+
+    </div>
+    `
+}
+
+// genera gruppi
+function generaGruppi(i){
+
+    let g = document.getElementById("gruppi_"+i).value
+    let box = document.getElementById("box_"+i)
+
+    box.innerHTML = ""
+
+    for(let k=1;k<=g;k++){
+
+        box.innerHTML += `
+        <div>
+            Lotto ${k}<br>
+
+            Casse:
+            <input id="casse_${i}_${k}">
+
+            Lotto:
+            <input id="lotto_${i}_${k}" type="date">
+        </div>
+        <hr>
+        `
+    }
+}
+
+// GENERA DDT
+function generaDDT(){
+
+    let pedane_arr = []
+    let lotti = []
+
+    for(let i=1;i<=pedane;i++){
+
+        let tot = document.getElementById("tot_"+i).value
+        pedane_arr.push(tot)
+
+        let gruppi = document.getElementById("gruppi_"+i).value
+
+        for(let k=1;k<=gruppi;k++){
+
+            let casse = document.getElementById("casse_"+i+"_"+k).value
+            let lotto = document.getElementById("lotto_"+i+"_"+k).value
+
+            if(casse && lotto){
+                lotti.push({
+                    colli: casse,
+                    data: lotto
+                })
+            }
+        }
+    }
+
+    const data = {
+        id: {{ ordine.id }},
+        telefono: "{{ ordine.telefono }}",
+        cliente: "{{ ordine.cliente }}",
+        trasportatore: "{{ ordine.trasportatore }}",
+        targa: "{{ ordine.targa }}",
+        pedane: pedane_arr,
+        lotti: lotti,
+        tipo: "uova_sfuse"
+    }
+
+    fetch("/genera_ddt_uova_sfuse",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(data)
+    })
+    .then(()=>{
+        window.location.href = "/firma/"+data.telefono+"?index="+data.id+"&tipo=uova_sfuse"
+    })
+}
+</script>
+
+</body>
+</html>

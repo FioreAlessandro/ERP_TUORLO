@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Lista Uova Sfuse</title>
+
+<style>
+body {
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1e293b, #020617);
+    color: white;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ===== TITLE ===== */
+.title {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+/* ===== BUTTON ===== */
+.btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border:none;
+    padding:10px 15px;
+    border-radius:10px;
+    color:white;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(59,130,246,0.6);
+}
+
+/* ===== CONTAINER ===== */
+.container {
+    max-width: 700px;
+    margin:auto;
+    padding: 10px;
+}
+
+/* ===== CARD ===== */
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+    border-left: 5px solid #3b82f6;
+    transition: 0.2s;
+}
+
+/* COMPLETATO */
+.card.completato {
+    border-left: 5px solid #22c55e;
+    background: rgba(34,197,94,0.08);
+}
+
+/* HOVER */
+.card:hover {
+    transform: scale(1.02);
+}
+
+/* STATO */
+.stato {
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
+
+/* PULSANTE APRI */
+.btn-open {
+    background:#111827;
+    border:1px solid #374151;
+    padding:8px 12px;
+    border-radius:8px;
+    color:white;
+    cursor:pointer;
+}
+
+.btn-open:hover {
+    background:#1f2937;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="title">🥚 Uova Sfuse</div>
+    <button class="btn" onclick="fineGiornata()">📦 Fine giornata</button>
+</div>
+
+<div class="container">
+
+{% for c in lista %}
+
+<div class="card {% if c.stato == 'completato' %}completato{% endif %}">
+
+    <h3>{{ c.cliente }}</h3>
+
+    <div class="stato">
+        Stato: {{ c.stato }}
+    </div>
+
+    <button class="btn-open" onclick="apri({{c.id}})">Apri</button>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<script>
+
+function apri(id){
+    window.location.href = "/uova_sfuse_dettaglio?id="+id
+}
+
+function fineGiornata(){
+    fetch("/fine_giornata_uova_sfuse")
+    .then(r => r.text())
+    .then(res => {
+        alert("📦 " + res)
+        location.reload()
+    })
+}
+
+</script>
+
+</body>
+</html>

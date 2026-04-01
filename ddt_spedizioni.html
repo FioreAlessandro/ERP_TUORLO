@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Documento di Trasporto</title>
+
+<style>
+
+body{
+background:#ccc;
+font-family:Arial, Helvetica, sans-serif;
+}
+
+.page{
+width:210mm;
+min-height:297mm;
+background:white;
+margin:auto;
+padding:8mm;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:10px;
+}
+
+td,th{
+border:1px solid #2d4a7c;
+padding:4px;
+vertical-align:top;
+}
+
+.header-title{
+font-size:16px;
+font-weight:bold;
+text-align:center;
+color:#2d4a7c;
+}
+
+.sub{
+text-align:center;
+font-size:9px;
+}
+
+.small{
+font-size:8px;
+color:#2d4a7c;
+}
+
+.center{
+text-align:center;
+}
+
+.right{
+text-align:right;
+}
+
+.blue{
+background:#2d4a7c;
+color:white;
+font-weight:bold;
+}
+
+.no-border{
+border:none;
+}
+
+.table-prodotti td{
+height:28px;
+}
+
+.footer-note{
+font-size:7px;
+color:#444;
+}
+.logo-box{
+height:140px;
+width:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.logo-img{
+max-height:180px;
+max-width:90%;
+object-fit:contain;
+display:block;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="page">
+
+
+<!-- HEADER -->
+
+<table>
+
+<tr>
+
+<td style="width:60%">
+
+<div class="small">
+CEDENTE: Ditta, Dipendenza, Domicilio o Residenza, Partita IVA
+</div>
+
+<div class="logo-box">
+    <img src="{{ timbro }}" class="logo-img">
+</div>
+
+</td>
+
+
+<td style="width:40%">
+
+<div class="header-title">
+DOCUMENTO DI TRASPORTO
+</div>
+
+<div class="sub">(D.d.t.)</div>
+
+<div class="sub">
+D.P.R. 472 del 14.08.1996 - D.P.R. 696 del 21.12.1996
+</div>
+
+<br>
+
+<table style="border:none;width:100%">
+
+<tr>
+
+<td class="no-border"><b>N.</b></td>
+
+<td class="no-border" style="border-bottom:1px solid black">
+{{ numero }}
+</td>
+
+<td class="no-border center">del</td>
+
+<td class="no-border" style="border-bottom:1px solid black">
+{{ data }}
+</td>
+
+</tr>
+
+</table>
+
+<br>
+
+<div class="small">a mezzo:</div>
+
+<label>
+<input type="checkbox">
+vettore
+</label>
+
+<label>
+<input type="checkbox" checked>
+cedente
+</label>
+
+<label>
+<input type="checkbox">
+cessionario
+</label>
+
+</td>
+
+</tr>
+
+</table>
+
+
+<!-- CLIENTE -->
+
+<table>
+
+<tr>
+
+<td style="width:60%">
+
+<div class="small">
+CESSIONARIO: Ditta, Dipendenza, Domicilio o Residenza, Partita IVA
+</div>
+
+{{ cliente }}<br>
+{{ indirizzo }}<br>
+{{ citta }}
+
+</td>
+
+
+<td style="width:40%">
+
+<div class="small">
+LUOGO DI DESTINAZIONE
+</div>
+
+IDEM
+
+</td>
+
+</tr>
+
+</table>
+
+
+
+<!-- CAUSALE -->
+
+<table>
+
+<tr>
+
+<td style="width:60%">
+
+<div class="small">
+CAUSALE DEL TRASPORTO
+</div>
+
+Vendita
+
+</td>
+
+
+<td style="width:25%;height:40px">
+
+<div class="small">
+VS ORD. N.
+</div>
+
+</td>
+
+
+<td style="width:15%">
+
+<div class="small">
+CONTO
+</div>
+
+<label>
+<input type="checkbox">
+in conto
+</label>
+
+<br>
+
+<label>
+<input type="checkbox">
+a saldo
+</label>
+
+</td>
+
+</tr>
+
+</table>
+
+
+
+<!-- TABELLA PRODOTTI -->
+
+<table class="table-prodotti">
+
+<tr class="blue center">
+
+<th style="width:15%">
+QUANTITA
+</th>
+
+<th>
+DESCRIZIONE DEI BENI (natura e qualità)
+</th>
+
+<th style="width:20%">
+IMPORTO
+</th>
+
+</tr>
+
+
+{% for p in prodotti %}
+
+<tr>
+
+<td class="center">
+{{ p.qta }}
+</td>
+
+<td>
+{{ p.descrizione }}
+</td>
+
+<td class="right">
+{{ p.prezzo }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+
+{% for i in range(18 - prodotti|length) %}
+
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+
+
+{% if mostra_sospeso %}
+
+<table>
+
+<tr>
+
+<td class="right" style="color:red">
+
+Saldo sospeso precedente:
+€ {{ "%.2f"|format(sospeso) }}
+
+</td>
+
+</tr>
+
+</table>
+
+{% endif %}
+
+
+
+{% if saldato %}
+
+<table>
+
+<tr>
+
+<td class="right" style="color:green">
+Saldato sospeso precedente
+</td>
+
+</tr>
+
+</table>
+
+{% endif %}
+
+
+
+<!-- ASPETTO / COLLI / PESO / PORTO / TOTALE -->
+
+<table>
+
+<tr>
+
+<td>
+
+<div class="small">
+ASPETTO ESTERIORE DEI BENI
+</div>
+
+INTEGRO
+
+</td>
+
+
+<td>
+
+<div class="small">
+N. COLLI
+</div>
+
+{{ colli }}
+
+</td>
+
+
+<td>
+
+<div class="small">
+PESO KG
+</div>
+
+{{ peso_totale }}
+
+</td>
+
+
+<td>
+
+<div class="small">
+PORTO
+</div>
+
+</td>
+
+
+<td class="right">
+
+<b>
+{% if mostra_totale %}
+TOTALE € {{ totale }}
+{% else %}
+{{ testo_pagamento }}
+{% endif %}
+</b>
+
+</td>
+
+</tr>
+
+</table>
+
+
+
+
+<!-- VETTORE -->
+
+<table>
+
+<tr class="blue center">
+
+<th style="width:45%">
+VETTORE: Ditta, Domicilio o Residenza
+</th>
+
+<th style="width:25%">
+DATA E ORA DEL RITIRO
+</th>
+
+<th style="width:30%">
+FIRME
+</th>
+
+</tr>
+
+
+<tr style="height:55px">
+
+<td></td>
+
+<td class="center">
+{{ data }} - 10:00
+</td>
+
+<td class="center">
+
+{% if firma %}
+<img src="{{ firma }}" style="height:50px">
+{% endif %}
+
+</td>
+
+</tr>
+
+</table>
+
+
+
+<!-- CONSEGNA O INIZIO TRASPORTO -->
+
+<table>
+
+<tr>
+
+<td style="width:50%">
+
+Consegna o inizio trasporto a mezzo
+
+<br><br>
+
+<label>
+<input type="checkbox" checked>
+cedente
+</label>
+
+<br>
+
+<label>
+<input type="checkbox">
+cessionario
+</label>
+
+</td>
+
+
+<td style="width:25%">
+<div class="small">DATA</div>
+{{ data }}
+</td>
+
+
+<td style="width:25%">
+<div class="small">ORA</div>
+10:00
+</td>
+
+</tr>
+
+</table>
+
+
+
+<!-- ANNOTAZIONI -->
+
+<table>
+
+<tr>
+
+<td style="width:55%">
+<div class="small">ANNOTAZIONI - VARIAZIONI</div>
+
+</td>
+
+
+<td style="width:20%">
+<div class="small">NUMERO PROGRESSIVO</div>
+
+</td>
+
+
+<td style="width:25%">
+<div class="small">FIRMA</div>
+
+</td>
+
+</tr>
+
+</table>
+
+
+
+</div>
+
+</body>
+</html>

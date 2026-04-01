@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione Pollo</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="header">
+    Gestione Produzione Pollo
+</div>
+
+<div class="container">
+
+<form method="POST" action="/conferma_pollo">
+
+<label>Data Macellazione</label>
+<input type="date" name="macellazione" required>
+<br><br>
+
+{% for c in clienti %}
+<div class="card">
+    <h3>{{ c.nome }}</h3>
+    <p>Tipo: {{ c.tipo }} (€ {{ c.prezzo_kg }}/kg)</p>
+
+    <input type="hidden" name="telefono_{{loop.index}}" value="{{c.telefono}}">
+    <input type="hidden" name="tipo_{{loop.index}}" value="{{c.tipo}}">
+    <input type="hidden" name="prezzo_{{loop.index}}" value="{{c.prezzo_kg}}">
+
+    <label>Kg totali</label>
+    <input type="number" step="0.01" name="kg_{{loop.index}}" required>
+</div>
+{% endfor %}
+
+<input type="hidden" name="tot_clienti" value="{{clienti|length}}">
+
+<br>
+<button type="submit">CONFERMA POLLI</button>
+
+</form>
+
+</div>
+
+</body>
+</html>

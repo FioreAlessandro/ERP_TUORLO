@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Consegna Cliente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="header">
+    Gestione Consegna Cliente
+</div>
+
+<div class="container">
+
+    <h2 id="nome">Caricamento...</h2>
+
+    <div class="card">
+        <h3>ORDINE</h3>
+        <div id="ordini"></div>
+    </div>
+
+    <div id="azioni"></div>
+
+</div>
+
+<script>
+
+let telefono = "{{telefono}}"
+let nofirma = "{{nofirma}}"
+
+fetch("/api/ordini/" + telefono)
+.then(r=>r.json())
+.then(data=>{
+
+    document.getElementById("nome").innerText = data.nome
+
+    let ordiniHtml = "<ul>"
+
+    data.ordini.forEach(o=>{
+        ordiniHtml += `<li>${o}</li>`
+    })
+
+    ordiniHtml += "</ul>"
+
+    document.getElementById("ordini").innerHTML = ordiniHtml
+
+})
+
+
+fetch("/api/cliente_info/" + telefono)
+.then(r=>r.json())
+.then(c=>{
+
+    if(c.stato === "consegnato"){
+        document.getElementById("azioni").innerHTML =
+        `<div class="alert-success">Cliente già consegnato</div>`
+        return
+    }
+
+    if(!c.ddt){
+document.getElementById("azioni").innerHTML =
+`<div class="badge badge-warning">Cliente senza DDT</div>`
+return
+}
+
+
+    fetch("/api/sospeso/" + telefono)
+    .then(r=>r.json())
+    .then(info=>{
+
+        let scarichi_html = ""
+
+        if(info.scarichi && info.scarichi.length > 0){
+
+            let righe = ""
+
+            info.scarichi.forEach(s=>{
+
+                let residuo = (parseFloat(s.importo) - parseFloat(s.pagato)).toFixed(2)
+
+                if(parseFloat(residuo) > 0){
+                    righe += `<li>DDT ${s.numero_ddt} del ${s.data} → € ${residuo}</li>`
+                }
+
+            })
+
+            if(righe !== ""){
+                scarichi_html = `
+                <div class="card">
+                    <h4>Scarichi sospesi</h4>
+                    <ul>${righe}</ul>
+                </div>
+                `
+            }
+        }
+
+
+        document.getElementById("azioni").innerHTML = `
+
+<div class="card">
+
+<p>
+<strong>
+Totale ordine oggi: € 
+<span id="totale_ordine">${parseFloat(info.totale_ordine).toFixed(2)}</span>
+</strong>
+</p>
+
+<p>
+<strong>
+Metodo pagamento:
+<span style="font-weight:bold;color:#2563eb">
+${c.pagamento}
+</span>
+</strong>
+</p>
+
+<p>
+<span class="badge badge-danger">
+Sospeso totale: € ${parseFloat(info.totale_sospeso).toFixed(2)}
+</span>
+</p>
+
+${scarichi_html}
+
+<br>
+
+<input type="number"
+       id="pagato_oggi"
+       placeholder="Importo pagato oggi"
+       min="0"
+       step="0.01"
+       required>
+
+<br><br>
+
+<button onclick="genera()">GENERA DDT</button>
+
+</div>
+`
+
+        // 🔹 attiva controllo pagamento
+        autoPagamento(c.pagamento)
+
+    })
+
+})
+
+
+function autoPagamento(metodo){
+
+    let campo = document.getElementById("pagato_oggi")
+    let totale = parseFloat(document.getElementById("totale_ordine").innerText)
+
+    if(!campo) return
+
+    metodo = metodo.toLowerCase()
+
+    if(metodo === "bonifico"){
+
+        campo.value = totale.toFixed(2)
+
+        campo.readOnly = true
+        campo.style.background = "#e5e7eb"
+        campo.style.cursor = "not-allowed"
+
+    }else{
+
+        campo.readOnly = false
+        campo.style.background = "white"
+
+    }
+
+}
+
+
+function genera(){
+
+    let campo = document.getElementById("pagato_oggi")
+
+    if(!campo.value){
+        alert("Inserire importo pagato")
+        return
+    }
+
+    let pagato = parseFloat(campo.value)
+
+    fetch("/genera_ddt/" + telefono, {
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body: JSON.stringify({
+            pagato_oggi: pagato
+        })
+
+    })
+    .then(r=>r.text())
+    .then(msg=>{
+
+    alert(msg)
+
+    if(msg.includes("nofirma")){
+        window.location.href = "/"
+    }else{
+        window.location.href = "/firma/" + telefono
+    }
+
+})
+
+    }
+
+
+
+</script>
+
+</body>
+</html>

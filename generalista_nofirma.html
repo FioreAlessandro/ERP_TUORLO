@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Generalista</title>
+
+<style>
+
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
+padding:40px;
+}
+
+.wrapper{
+max-width:1200px;
+margin:auto;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:40px;
+}
+
+.box{
+background:#1f2937;
+padding:30px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+h2{
+margin-top:0;
+}
+
+label{
+display:block;
+margin-top:15px;
+margin-bottom:5px;
+font-size:14px;
+}
+
+#box_sconto{
+background:#111827;
+padding:15px;
+border-radius:8px;
+margin-top:10px;
+border:1px solid rgba(255,255,255,0.1);
+}
+
+select,input{
+width:100%;
+padding:10px;
+border-radius:6px;
+border:none;
+margin-bottom:10px;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+.btn-add{
+background:#3b82f6;
+color:white;
+}
+
+.btn-save{
+background:#22c55e;
+color:white;
+margin-top:20px;
+}
+
+.lista-item{
+background:#111827;
+padding:10px;
+border-radius:6px;
+margin-bottom:8px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.btn-delete{
+background:#ef4444;
+color:white;
+padding:4px 8px;
+border-radius:5px;
+}
+
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+
+.popup-box{
+background:#1f2937;
+padding:40px;
+border-radius:12px;
+text-align:center;
+width:400px;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+.popup-buttons{
+margin-top:20px;
+display:flex;
+gap:10px;
+justify-content:center;
+}
+
+.btn-blue{
+background:#3b82f6;
+color:white;
+}
+
+.btn-green{
+background:#22c55e;
+color:white;
+}
+.btn-dashboard{
+background:#6366f1;
+color:white;
+}
+
+.btn-dashboard:hover{
+background:#4f46e5;
+}
+
+
+</style>
+
+</head>
+
+<body>
+
+
+
+</div>
+
+<div class="wrapper">
+
+<!-- INSERIMENTO ORDINI -->
+<div class="box">
+
+<h2>Inserimento Ordini</h2>
+
+<label>Cliente</label>
+<select id="cliente"></select>
+
+<label>Prodotto</label>
+<select id="prodotto"></select>
+
+<div id="extra"></div>
+
+<label>Quantità</label>
+<input type="number" id="quantita" value="1" min="1">
+
+<label>Sconto</label>
+
+<select id="usa_sconto" onchange="gestioneSconto()">
+<option value="no" selected>NO</option>
+<option value="si">SI</option>
+</select>
+
+<div id="box_sconto" style="display:none">
+
+<label>Tipo sconto</label>
+<select id="tipo_sconto" onchange="gestioneTipoSconto()">
+<option value="totale">Su totale ordine</option>
+<option value="prodotto">Su prodotto</option>
+</select>
+<div id="scegli_prodotto_sconto" style="display:none">
+
+<label>Prodotto scontato</label>
+
+<input 
+type="text" 
+id="prodotto_sconto"
+readonly
+style="background:#e5e7eb;color:#111827;font-weight:600"
+>
+
+</div>
+
+<label>% Sconto</label>
+<input type="number" id="sconto_percentuale" step="0.01" min="0">
+
+<label>Sconto €</label>
+<input type="number" id="sconto_importo" step="0.01" min="0">
+
+
+<div id="box_totale_preview" style="display:none;margin-top:10px;background:#020617;padding:12px;border-radius:8px">
+
+<div id="totale_originale"></div>
+
+<div id="totale_sconto" style="color:#ef4444;font-weight:bold"></div>
+
+<div id="totale_finale" style="font-size:18px;font-weight:bold;color:#22c55e"></div>
+
+</div>
+</div>
+
+
+
+<button class="btn-add" onclick="aggiungi()">
+Aggiungi Ordine
+</button>
+
+</div>
+
+
+<!-- LISTA ORDINI -->
+<div class="box">
+
+<h2>Ordini Inseriti</h2>
+
+<div id="lista"></div>
+
+<button class="btn-save" onclick="salva()">
+Salva Tutto
+</button>
+
+<button class="btn-save" id="btnInvia" onclick="inviaDDT()" style="display:none">
+Conferma e invia DDT
+</button>
+
+</div>
+
+</div>
+
+
+<!-- POPUP -->
+<div id="popupSuccess" class="popup">
+
+<div class="popup-box">
+
+<h2>✅ Lista generata</h2>
+
+<p>I DDT sono pronti per il corriere.</p>
+
+<div class="popup-buttons">
+
+<button onclick="continuaInserimento()" class="btn-blue">
+Continua inserimento
+</button>
+
+<button onclick="vaiLista()" class="btn-green">
+Vai alla lista consegne
+</button>
+
+<button onclick="vaiDashboard()" class="btn-green">
+Torna alla Home
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+function mostraInvio(){
+
+document.getElementById("btnInvia").style.display="block";
+
+}
+
+function generaDDT(){
+
+fetch("/api/lista")
+.then(r=>r.json())
+.then(clienti=>{
+
+if(clienti.length===0){
+alert("Nessun cliente trovato");
+return;
+}
+
+clienti.forEach(c=>{
+
+let telefono = c.telefono;
+
+fetch("/genera_ddt/"+telefono,{
+method:"POST"
+})
+.then(()=>{
+
+window.open("/cliente/"+telefono,"_blank");
+
+});
+
+});
+
+mostraInvio();
+
+});
+
+}
+
+function inviaDDT(){
+
+fetch("/invia_ddt_clienti",{
+method:"POST"
+})
+.then(res=>res.text())
+.then(msg=>{
+
+alert("DDT inviati");
+
+});
+
+}
+
+function mostraInvio(){
+document.getElementById("btnInvia").style.display="block";
+}
+
+let ordini = [];
+
+const selectCliente = document.getElementById("cliente");
+const selectProdotto = document.getElementById("prodotto");
+const extra = document.getElementById("extra");
+
+
+// ================= CARICA DATI =================
+fetch("/api/dati_generalista_nofirma")
+.then(res => res.json())
+.then(data => {
+
+data.clienti.forEach(c=>{
+let opt=document.createElement("option");
+opt.value=c;
+opt.textContent=c;
+selectCliente.appendChild(opt);
+});
+
+data.prodotti.forEach(p=>{
+let opt=document.createElement("option");
+opt.value=p;
+opt.textContent=p;
+selectProdotto.appendChild(opt);
+});
+
+});
+
+
+// ================= CAMPI DINAMICI =================
+
+const prodottiLotto = [
+"nobiluovo",
+"Nobiluovo",
+"Novelle",
+"novelle",
+"l'ov",
+"lov",
+"180",
+"carta",
+"conf",
+"Conf"
+]
+
+const prodottiPollo = [
+"pollo allegretto",
+"pollo maestoso",
+"signor pollo"
+]
+
+// ================= CAMPI DINAMICI =================
+
+selectProdotto.addEventListener("change", function(){
+
+let val = this.value.toLowerCase();
+extra.innerHTML = "";
+
+// ===== POLLO =====
+if(val.includes("pollo")){
+
+extra.innerHTML = `
+<label>Data Macellazione</label>
+<input type="date" id="macellazione">
+
+<label>Data Lotto</label>
+<input type="date" id="lotto">
+
+<label>Kg</label>
+<input type="number" step="0.01" id="kg">
+`;
+
+return;
+
+aggiornaProdottoSconto()
+}
+
+
+// ===== PRODOTTI UOVA =====
+if(
+val.includes("nobiluovo") ||
+val.includes("novelle") ||
+val.includes("l'ov") ||
+val.includes("lov") ||
+val.includes("180") ||
+val.includes("carta") ||
+val.includes("conf")
+){
+
+extra.innerHTML = `
+<label>Data Lotto</label>
+<input type="date" id="lotto">
+`;
+
+}
+
+calcolaPreview()
+aggiornaProdottoSconto()
+
+});
+
+// ================= AGGIUNGI =================
+function aggiungi(){
+
+let cliente = selectCliente.value;
+let prodotto = selectProdotto.value;
+let quantita = parseInt(document.getElementById("quantita").value);
+
+let lotto = document.getElementById("lotto") ? document.getElementById("lotto").value : "";
+let macellazione = document.getElementById("macellazione") ? document.getElementById("macellazione").value : "";
+let kg = document.getElementById("kg") ? document.getElementById("kg").value : "";
+
+let prod = prodotto.toLowerCase();
+
+if(!cliente){
+alert("Selezionare un cliente");
+return;
+}
+
+if(!prodotto){
+alert("Selezionare un prodotto");
+return;
+}
+
+if(!quantita || quantita <= 0){
+alert("Inserire una quantità valida");
+return;
+}
+
+
+// ===== VALIDAZIONE POLLO =====
+if(prod.includes("pollo")){
+
+if(!macellazione){
+alert("Inserire data macellazione");
+return;
+}
+
+if(!lotto){
+alert("Inserire data lotto");
+return;
+}
+
+if(!kg || kg <= 0){
+alert("Inserire i kg del pollo");
+return;
+}
+
+}
+
+
+// ===== VALIDAZIONE PRODOTTI UOVA =====
+if(
+prod.includes("nobiluovo") ||
+prod.includes("novelle") ||
+prod.includes("l'ov") ||
+prod.includes("lov") ||
+prod.includes("180") ||
+prod.includes("carta") ||
+prod.includes("conf")
+){
+
+if(!lotto){
+alert("Inserire data lotto");
+return;
+}
+
+}
+
+
+// ===== SCONTO =====
+let usa_sconto = document.getElementById("usa_sconto").value
+
+let tipo_sconto=""
+let sconto_percentuale=0
+let sconto_importo=0
+let prodotto_sconto=""
+
+if(usa_sconto==="si"){
+
+tipo_sconto=document.getElementById("tipo_sconto").value
+
+sconto_percentuale=parseFloat(document.getElementById("sconto_percentuale").value)||0
+sconto_importo=parseFloat(document.getElementById("sconto_importo").value)||0
+
+if(sconto_percentuale===0 && sconto_importo===0){
+alert("Inserire almeno uno sconto")
+return
+}
+
+if(tipo_sconto==="prodotto"){
+
+prodotto_sconto=document.getElementById("prodotto_sconto").value
+
+if(!prodotto_sconto){
+alert("Selezionare prodotto per lo sconto")
+return
+}
+
+}
+
+}
+
+
+// ===== SALVATAGGIO ORDINE =====
+ordini.push({
+
+cliente,
+prodotto,
+quantita,
+lotto,
+macellazione,
+kg,
+prezzo:0,
+usa_sconto,
+tipo_sconto,
+sconto_percentuale,
+sconto_importo,
+prodotto_sconto
+
+})
+
+aggiornaLista();
+calcolaPreview()
+
+document.getElementById("quantita").value = 1;
+extra.innerHTML = "";
+
+// ===== RESET SCONTO =====
+
+document.getElementById("usa_sconto").value = "no"
+
+document.getElementById("box_sconto").style.display = "none"
+
+document.getElementById("sconto_percentuale").value = ""
+document.getElementById("sconto_importo").value = ""
+
+document.getElementById("box_totale_preview").style.display = "none"
+
+let campoProd = document.getElementById("prodotto_sconto")
+if(campoProd){
+campoProd.value = ""
+}
+
+}
+
+function aggiornaProdottoSconto(){
+
+let prodotto = document.getElementById("prodotto").value
+
+let campo = document.getElementById("prodotto_sconto")
+
+if(campo){
+campo.value = prodotto
+}
+
+}
+
+
+function gestioneTipoSconto(){
+
+let tipo = document.getElementById("tipo_sconto").value
+let boxProd = document.getElementById("scegli_prodotto_sconto")
+
+if(tipo==="prodotto"){
+
+boxProd.style.display="block"
+
+aggiornaProdottoSconto()
+
+}else{
+
+boxProd.style.display="none"
+
+}
+
+}
+
+function gestioneSconto(){
+
+let scelta = document.getElementById("usa_sconto").value
+let box = document.getElementById("box_sconto")
+
+if(scelta==="si"){
+
+box.style.display="block"
+calcolaPreview()
+
+}else{
+
+box.style.display="none"
+
+document.getElementById("box_totale_preview").style.display="none"
+
+document.getElementById("sconto_percentuale").value=""
+document.getElementById("sconto_importo").value=""
+
+}
+
+}
+
+// ================= LISTA =================
+function aggiornaLista(){
+
+let html="";
+
+ordini.forEach((o,index)=>{
+
+html+=`
+<div class="lista-item">
+
+<div>
+<b>${o.cliente}</b><br>
+${o.prodotto} — Q:${o.quantita}
+${o.lotto?" | Lotto:"+o.lotto:""}
+${o.macellazione?" | Mac:"+o.macellazione:""}
+${o.kg?" | Kg:"+o.kg:""}
+</div>
+
+<button class="btn-delete" onclick="elimina(${index})">
+X
+</button>
+
+</div>
+`;
+
+});
+
+document.getElementById("lista").innerHTML=html;
+
+}
+
+// ================= ELIMINA =================
+function elimina(i){
+
+ordini.splice(i,1);
+aggiornaLista();
+calcolaPreview()
+
+}
+
+
+// ================= SALVA =================
+function salva(){
+
+if(ordini.length===0){
+alert("Non ci sono ordini");
+return;
+}
+
+fetch("/salva_ordini_nofirma",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(ordini)
+})
+.then(r=>r.json())
+.then(()=>{
+
+fetch("/genera_lista",{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+body:"lotto="+new Date().toISOString().split('T')[0]
+})
+.then(()=>{
+
+generaDDT();
+
+});
+
+});
+
+}
+
+function apriDDT(){
+
+fetch("/api/lista_nofirma")
+.then(res=>res.json())
+.then(lista=>{
+
+lista.forEach(c=>{
+
+let url="/genera_ddt_nofirma/"+c.telefono;
+
+fetch(url,{method:"POST"})
+.then(()=>{
+
+window.open("/cliente/"+c.telefono+"?nofirma=1","_blank");
+
+});
+
+});
+
+});
+
+mostraInvio();
+
+}
+
+
+// ================= POPUP =================
+function continuaInserimento(){
+
+document.getElementById("popupSuccess").style.display="none";
+
+}
+
+function vaiLista(){
+
+window.location.href="/";
+
+}
+
+function vaiDashboard(){
+
+window.location.href="/menu_ddt";
+
+}
+
+function calcolaPreview(){
+
+let cliente = document.getElementById("cliente").value
+
+let percent = parseFloat(document.getElementById("sconto_percentuale").value)||0
+let importo = parseFloat(document.getElementById("sconto_importo").value)||0
+
+let totale = 0
+
+let richieste = []
+
+// ===== ORDINI GIA INSERITI =====
+
+ordini.forEach(o => {
+
+let url = "/api/prezzo_prodotto?prodotto="+encodeURIComponent(o.prodotto.toLowerCase())+
+"&cliente="+encodeURIComponent(cliente)
+
+richieste.push(
+
+fetch(url)
+.then(r=>r.json())
+.then(d=>{
+
+let prezzo = parseFloat(d.prezzo)||0
+
+if(o.prodotto.toLowerCase().includes("pollo")){
+totale += prezzo * (parseFloat(o.kg)||0)
+}else{
+totale += prezzo * (parseFloat(o.quantita)||0)
+}
+
+})
+
+)
+
+})
+
+// ===== PRODOTTO ATTUALE =====
+
+let prodotto = document.getElementById("prodotto").value.toLowerCase()
+let quantita = parseFloat(document.getElementById("quantita").value)||0
+
+let kg = 0
+if(document.getElementById("kg")){
+kg = parseFloat(document.getElementById("kg").value)||0
+}
+
+if(prodotto && quantita>0){
+
+let url = "/api/prezzo_prodotto?prodotto="+encodeURIComponent(prodotto)+
+"&cliente="+encodeURIComponent(cliente)
+
+richieste.push(
+
+fetch(url)
+.then(r=>r.json())
+.then(d=>{
+
+let prezzo = parseFloat(d.prezzo)||0
+
+if(prodotto.includes("pollo")){
+totale += prezzo * kg
+}else{
+totale += prezzo * quantita
+}
+
+})
+
+)
+
+}
+
+// ===== DOPO TUTTE LE RICHIESTE =====
+
+Promise.all(richieste).then(()=>{
+
+let totale_sconto = 0
+
+if(percent>0){
+totale_sconto += totale*(percent/100)
+}
+
+if(importo>0){
+totale_sconto += importo
+}
+
+let finale = totale - totale_sconto
+
+if(finale<0){
+finale = 0
+}
+
+document.getElementById("box_totale_preview").style.display="block"
+
+document.getElementById("totale_originale").innerHTML =
+"Totale ordine: € "+totale.toFixed(2)
+
+document.getElementById("totale_sconto").innerHTML =
+"Sconto applicato: -€ "+totale_sconto.toFixed(2)
+
+document.getElementById("totale_finale").innerHTML =
+"Totale finale: € "+finale.toFixed(2)
+
+})
+
+}
+
+
+
+document.getElementById("sconto_percentuale").addEventListener("input",calcolaPreview)
+document.getElementById("sconto_importo").addEventListener("input",calcolaPreview)
+document.getElementById("quantita").addEventListener("input",calcolaPreview)
+document.getElementById("cliente").addEventListener("change",calcolaPreview)
+document.getElementById("prodotto").addEventListener("change",calcolaPreview)
+</script>
+
+</body>
+</html>

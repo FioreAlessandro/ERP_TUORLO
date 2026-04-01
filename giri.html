@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/app.css">
+
+<style>
+
+body{
+    background:#0f172a;
+    font-family:Arial;
+    margin:0;
+    color:white;
+}
+
+.container{
+    max-width:600px;
+    margin:auto;
+    padding:20px;
+}
+
+.title{
+    font-size:24px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+/* CARD */
+.card{
+    background:#1f2937;
+    padding:18px;
+    border-radius:12px;
+    margin-bottom:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+    transition:0.25s;
+}
+
+.card:hover{
+    transform:scale(1.02);
+}
+
+/* 🔥 COMPLETATO = VERDE VERO */
+.card.done{
+    background:linear-gradient(135deg,#16a34a,#22c55e);
+    color:white;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* IN CORSO */
+.card.pending{
+    border-left:6px solid #3b82f6;
+}
+
+.cliente{
+    font-size:16px;
+    font-weight:bold;
+}
+
+.status{
+    font-size:13px;
+    margin-top:6px;
+    opacity:0.9;
+}
+
+/* BOTTONE */
+.btn{
+    margin-top:12px;
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.btn:hover{
+    transform:scale(1.05);
+}
+
+/* APRI */
+.btn-apri{
+    background:#3b82f6;
+    color:white;
+}
+
+/* COMPLETATO LABEL */
+.card.done {
+    background: green;
+}
+
+/* FINE GIORNATA */
+.btn-fine{
+    width:100%;
+    background:#22c55e;
+    margin-top:20px;
+    font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="title">🚚 Giri Consegne GDO</div>
+
+{% if lista|length == 0 %}
+<div style="text-align:center; margin-top:50px; opacity:0.6;">
+    🚚 Nessuna consegna oggi
+</div>
+{% endif %}
+
+{% for d in lista %}
+
+<div class="card 
+    {% if d.stato == 'completato' %}
+        done
+    {% endif %}
+">
+
+<div class="cliente">{{ d.cliente }}</div>
+
+{% if d.get('stato') =='completato' %}
+<div class="status">✔ Consegnato</div>
+{% else %}
+<div class="status">⏳ In consegna</div>
+
+<button class="btn btn-apri" onclick="apri('{{ loop.index0 }}')">
+Apri
+</button>
+
+{% endif %}
+
+</div>
+
+{% endfor %}
+
+{% if lista|length > 0 %}
+<button class="btn btn-fine" onclick="fineGiornata()">
+✔ Fine giornata GDO
+</button>
+{% endif %}
+
+</div>
+
+<script>
+
+function apri(i){
+    window.location.href="/dettaglio/"+i
+}
+
+function fineGiornata(){
+
+    if(!confirm("Confermi invio riepilogo DDT GDO?")) return
+
+    fetch("/fine_giornata_gdo")
+    .then(()=>{
+        alert("📧 Riepilogo inviato!")
+        location.reload()
+    })
+
+}
+
+</script>
+
+</body>
+</html>

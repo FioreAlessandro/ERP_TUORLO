@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>DDT MAIORA</title>
+
+<style>
+
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
+padding:40px;
+}
+
+.wrapper{
+max-width:900px;
+margin:auto;
+background:#1f2937;
+padding:30px;
+border-radius:12px;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+h1{
+margin-top:0;
+}
+
+label{
+display:block;
+margin-top:15px;
+margin-bottom:5px;
+font-size:14px;
+}
+
+input,select{
+width:100%;
+padding:10px;
+border-radius:6px;
+border:none;
+margin-bottom:10px;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#22c55e;
+color:white;
+font-weight:bold;
+}
+
+.box{
+background:#111827;
+padding:15px;
+border-radius:8px;
+margin-top:15px;
+}
+
+.pedana{
+background:#020617;
+padding:10px;
+border-radius:6px;
+margin-bottom:8px;
+}
+.popup{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+}
+
+.popup-box{
+background:#1f2937;
+padding:30px;
+border-radius:12px;
+width:500px;
+max-height:80vh;
+overflow:auto;
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
+}
+
+.success{color:#22c55e;}
+.error{color:#ef4444;}
+.warning{color:#f59e0b;}
+</style>
+
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<h1>Generazione DDT MAIORA</h1>
+
+<label>Cliente</label>
+<select id="cliente"></select>
+
+<label>Numero ordine</label>
+<input type="text" id="numero_ordine">
+
+<label>Numero pedane</label>
+<input type="number" id="num_pedane" min="1" max="20">
+
+<div id="pedane_box"></div>
+
+<h3>Gestione Lotti</h3>
+
+<div id="lotti_box"></div>
+
+<button onclick="aggiungiLotto()">Aggiungi lotto</button>
+
+<br><br>
+
+<div class="box">
+
+<div>Totale colli pedane: <b id="tot_pedane">0</b></div>
+<div>Totale colli lotti: <b id="tot_lotti">0</b></div>
+<div>Colli mancanti: <b id="tot_mancanti">0</b></div>
+
+</div>
+
+<br>
+<h3>DDT pronti</h3>
+<div id="lista_ddt"></div>
+
+<button onclick="generaTutti()">Invia tutti i DDT</button>
+
+<button onclick="genera()">Aggiungi DDT alla lista</button>
+
+
+</div>
+
+<script>
+
+let pedane=[]
+let lotti=[]
+let ddt_da_generare=[]
+
+// ================= CLIENTI =================
+fetch("/api/clienti_maiora")
+.then(res=>res.json())
+.then(data=>{
+
+let select=document.getElementById("cliente")
+
+data.forEach(c=>{
+
+let nome = c.nome || c   // 🔥 gestisce entrambi i casi
+
+let opt=document.createElement("option")
+opt.value=nome
+opt.textContent=nome
+
+select.appendChild(opt)
+
+})})
+
+// ================= PEDANE =================
+document.getElementById("num_pedane").addEventListener("input",function(){
+
+let n=parseInt(this.value)
+
+let box=document.getElementById("pedane_box")
+
+box.innerHTML=""
+pedane=[]
+
+for(let i=0;i<n;i++){
+
+box.innerHTML+=`
+<div class="pedana">
+
+Pedana ${i+1}
+
+<input type="number" 
+placeholder="Numero colli"
+oninput="updatePedana(${i},this.value)">
+
+</div>
+`
+
+}
+
+})
+
+// ================= UPDATE PEDANE =================
+function updatePedana(i,val){
+pedane[i]=parseInt(val)||0
+aggiornaTotali()
+}
+
+// ================= LOTTI =================
+function aggiungiLotto(){
+
+let box=document.getElementById("lotti_box")
+let index=lotti.length
+
+box.innerHTML+=`
+
+<div class="box">
+
+<label>Data lotto</label>
+<input type="date" 
+oninput="updateLottoData(${index},this.value)">
+
+<label>Numero colli</label>
+<input type="number" 
+oninput="updateLottoColli(${index},this.value)">
+
+</div>
+
+`
+
+lotti.push({})
+}
+
+function updateLottoData(i,val){
+lotti[i].data=val
+aggiornaTotali()
+}
+
+function updateLottoColli(i,val){
+lotti[i].colli=parseInt(val)||0
+aggiornaTotali()
+}
+
+// ================= TOTALI =================
+function aggiornaTotali(){
+
+let totPedane = pedane.reduce((a,b)=>a+b,0)
+
+let totLotti = 0
+lotti.forEach(l=>{
+totLotti += l.colli || 0
+})
+
+document.getElementById("tot_pedane").textContent = totPedane
+document.getElementById("tot_lotti").textContent = totLotti
+
+let mancanti = totPedane - totLotti
+
+let el = document.getElementById("tot_mancanti")
+
+if(mancanti < 0){
+el.textContent = "Superati di " + Math.abs(mancanti)
+el.style.color = "#ef4444"
+}
+else if(mancanti == 0){
+el.textContent = "0 ✓"
+el.style.color = "#22c55e"
+}
+else{
+el.textContent = mancanti
+el.style.color = "#f59e0b"
+}
+
+}
+
+// ================= GENERA =================
+function genera(){
+
+let cliente=document.getElementById("cliente").value
+let numero_ordine=document.getElementById("numero_ordine").value
+let numPedane=document.getElementById("num_pedane").value
+
+if(!cliente){
+mostraPopup("<div class='error'>❌ Cliente mancante</div>")
+return
+}
+
+if(pedane.length==0){
+mostraPopup("<div class='error'>❌ Nessuna pedana inserita</div>")
+return
+}
+
+if(lotti.length==0){
+mostraPopup("<div class='error'>❌ Nessun lotto inserito</div>")
+return
+}
+if(!numero_ordine){
+alert("Inserire numero ordine")
+return
+}
+
+if(!numPedane || numPedane<=0){
+alert("Inserire numero pedane")
+return
+}
+
+// pedane complete
+for(let i=0;i<pedane.length;i++){
+if(!pedane[i] || pedane[i]<=0){
+alert("Inserire colli per tutte le pedane")
+return
+}
+}
+
+
+// lotti completi
+for(let i=0;i<lotti.length;i++){
+
+if(!lotti[i].data){
+alert("Inserire data lotto")
+return
+}
+
+if(!lotti[i].colli || lotti[i].colli<=0){
+alert("Inserire colli lotto")
+return
+}
+
+}
+
+// controllo totale
+let totPedane=pedane.reduce((a,b)=>a+b,0)
+
+let totLotti=0
+lotti.forEach(l=>{
+totLotti += (l.colli || 0)
+})
+
+if(totPedane!=totLotti){
+alert("I colli dei lotti devono combaciare con le pedane")
+return
+}
+
+let payload={
+cliente:cliente,
+pedane:pedane,
+lotti:lotti,
+numero_ordine: numero_ordine
+}
+
+// invece di fetch → SALVI
+ddt_da_generare.push(payload)
+
+aggiornaListaDDT()
+
+alert("DDT aggiunto alla lista")
+
+
+}
+function aggiornaListaDDT(){
+
+let box = document.getElementById("lista_ddt")
+
+let html = ""
+
+ddt_da_generare.forEach((d,index)=>{
+
+let totale_colli = d.pedane.reduce((a,b)=>a+b,0)
+
+let date_lotti = d.lotti.map(l=>l.data).join(", ")
+
+html += `
+<div style="background:#111827;padding:10px;margin-bottom:8px;border-radius:6px">
+
+<b>${d.cliente}</b><br>
+Colli: ${totale_colli}<br>
+Lotti: ${date_lotti}
+
+<button onclick="rimuovi(${index})">X</button>
+
+</div>
+`
+})
+
+box.innerHTML = html
+}
+function generaTutti(){
+
+if(ddt_da_generare.length==0){
+mostraPopup("<div class='warning'>⚠ Nessun DDT inserito</div>")
+return
+}
+
+fetch("/aggiungi_multipli_maiora",{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(ddt_da_generare)
+
+})
+.then(()=>{
+    alert("DDT aggiunti alla lista")
+    window.location.href="/giri"   // 🔥 TORNA ALLA LISTA UNICA
+})
+.catch(err=>{
+mostraPopup(`<div class='error'>❌ ${err}</div>`)
+})
+
+}
+
+function rimuovi(i){
+ddt_da_generare.splice(i,1)
+aggiornaListaDDT()
+}
+function mostraPopup(html, titolo="Risultato"){
+
+document.getElementById("titoloPopup").innerText = titolo
+document.getElementById("contenutoPopup").innerHTML = html
+document.getElementById("popupRisultato").style.display="flex"
+
+}
+
+function chiudiPopup(){
+document.getElementById("popupRisultato").style.display="none"
+}
+
+</script>
+<div id="popupRisultato" class="popup">
+
+<div class="popup-box">
+
+<h2 id="titoloPopup">Risultato generazione</h2>
+
+<div id="contenutoPopup" style="text-align:left;margin-top:15px"></div>
+
+<div class="popup-buttons">
+
+<button onclick="chiudiPopup()" class="btn-blue">
+Chiudi
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

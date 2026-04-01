@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firma Cliente</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="header">
+    Firma Digitale Cliente
+</div>
+
+<div class="container" style="text-align:center;">
+
+    <h3>Apponi la firma</h3>
+
+    <canvas id="canvas" style="
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        background:white;
+        box-shadow:0 4px 12px rgba(0,0,0,0.05);
+    "></canvas>
+
+    <br><br>
+
+    <button onclick="salva()">INVIA DDT</button>
+    <button class="btn-secondary" onclick="pulisci()">CANCELLA</button>
+
+</div>
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth * 0.85;
+canvas.height = 220;
+
+// 🔥 setup linea
+ctx.lineWidth = 2.5;
+ctx.lineCap = "round";
+ctx.lineJoin = "round";
+ctx.strokeStyle = "#111";
+
+let drawing = false;
+
+function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+        y: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
+    };
+}
+
+// 🔥 START
+function start(e){
+    drawing = true;
+
+    const pos = getPos(e);
+
+    ctx.beginPath(); // 👉 UNA SOLA VOLTA
+    ctx.moveTo(pos.x, pos.y);
+}
+
+// 🔥 MOVE (LINEA CONTINUA)
+function move(e){
+
+    if(!drawing) return;
+
+    e.preventDefault();
+
+    const pos = getPos(e);
+
+    ctx.lineTo(pos.x, pos.y); // 👉 CONTINUA LINEA
+    ctx.stroke();
+}
+
+// 🔥 STOP
+function stop(){
+    drawing = false;
+}
+
+// EVENTI
+canvas.addEventListener("mousedown", start);
+canvas.addEventListener("mousemove", move);
+canvas.addEventListener("mouseup", stop);
+canvas.addEventListener("mouseleave", stop);
+
+canvas.addEventListener("touchstart", start);
+canvas.addEventListener("touchmove", move);
+canvas.addEventListener("touchend", stop);
+
+// 🔥 PULISCI
+function pulisci(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+// 🔥 SALVA (LASCIATO UGUALE)
+function salva(){
+
+    let blank = document.createElement("canvas");
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+
+    if(canvas.toDataURL() === blank.toDataURL()){
+        alert("Devi inserire la firma");
+        return;
+    }
+
+    const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+    const data = imgData.data;
+
+    let top = canvas.height;
+    let left = canvas.width;
+    let right = 0;
+    let bottom = 0;
+
+    for(let y=0;y<canvas.height;y++){
+        for(let x=0;x<canvas.width;x++){
+
+            const i = (y * canvas.width + x) * 4;
+
+            if(!(data[i]>240 && data[i+1]>240 && data[i+2]>240)){
+
+                if(x < left) left = x;
+                if(x > right) right = x;
+                if(y < top) top = y;
+                if(y > bottom) bottom = y;
+            }
+        }
+    }
+
+    const padding = 10;
+
+    left = Math.max(0,left-padding);
+    top = Math.max(0,top-padding);
+    right = Math.min(canvas.width,right+padding);
+    bottom = Math.min(canvas.height,bottom+padding);
+
+    const width = right-left;
+    const height = bottom-top;
+
+    const crop = document.createElement("canvas");
+    crop.width = width;
+    crop.height = height;
+
+    const cctx = crop.getContext("2d");
+
+    cctx.drawImage(canvas,left,top,width,height,0,0,width,height);
+
+    const boxWidth = 300;
+    const boxHeight = 90;
+
+    const final = document.createElement("canvas");
+    final.width = boxWidth;
+    final.height = boxHeight;
+
+    const fctx = final.getContext("2d");
+
+    fctx.clearRect(0,0,boxWidth,boxHeight);
+
+    const scale = Math.min(
+        boxWidth / width,
+        boxHeight / height
+    );
+
+    const drawW = width * scale;
+    const drawH = height * scale;
+
+    const offsetX = (boxWidth - drawW)/2;
+    const offsetY = (boxHeight - drawH)/2;
+
+    fctx.drawImage(crop, offsetX, offsetY, drawW, drawH);
+
+    const dataURL = final.toDataURL("image/png",1.0);
+
+    fetch("/salva_firma",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            telefono:"{{telefono}}",
+            firma:dataURL,
+            index:"{{index}}",
+            tipo:"{{tipo}}"
+        })
+    }).then(()=>{
+
+    const tipo = "{{tipo}}";
+
+    if (tipo === "normale") {
+        window.location.href = "/";
+    }else if  (tipo === "uova_sfuse"){
+        window.location.href = "/uova_sfuse_lista";
+    }
+    else {
+        window.location.href = "/giri";
+    }
+
+});
+
+}
+
+</script>
+
+</body>
+</html>

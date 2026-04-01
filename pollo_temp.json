@@ -1,0 +1,20 @@
+{
+    "393404884984": [
+        {
+            "tipo": "pollo allegretto",
+            "kg": 3.0,
+            "prezzo_totale": 21.0,
+            "macellazione": "27/02/2026",
+            "lotto": "20/03/2026",
+            "scadenza": "06/03/2026"
+        },
+        {
+            "tipo": "pollo maestoso",
+            "kg": 3.0,
+            "prezzo_totale": 27.0,
+            "macellazione": "05/03/2026",
+            "lotto": "06/03/2026",
+            "scadenza": "12/03/2026"
+        }
+    ]
+}

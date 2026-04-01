@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Dashboard Consegne</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
+padding:40px;
+}
+
+h1{
+text-align:center;
+margin-bottom:40px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:30px;
+max-width:800px;
+margin:auto;
+}
+
+.card{
+background:#1f2937;
+padding:40px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+.numero{
+font-size:42px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.green{color:#22c55e}
+.red{color:#ef4444}
+.blue{color:#3b82f6}
+.orange{color:#f59e0b}
+
+</style>
+</head>
+
+<body>
+
+<h1>Dashboard Consegne</h1>
+
+<div class="grid">
+
+<div class="card">
+Consegne completate
+<div class="numero green" id="consegnati">0</div>
+</div>
+
+<div class="card">
+Consegne mancanti
+<div class="numero red" id="mancanti">0</div>
+</div>
+
+<div class="card">
+Ordini totali
+<div class="numero blue" id="ordini">0</div>
+</div>
+
+<div class="card">
+Sospeso clienti
+<div class="numero orange" id="sospeso">0</div>
+</div>
+
+</div>
+
+<script>
+
+function aggiorna(){
+
+fetch("/api/dashboard_live")
+.then(r=>r.json())
+.then(d=>{
+
+document.getElementById("consegnati").innerText = d.consegnati
+document.getElementById("mancanti").innerText = d.mancanti
+document.getElementById("ordini").innerText = d.ordini_totali
+document.getElementById("sospeso").innerText = "€ "+d.sospeso
+
+})
+
+}
+
+aggiorna()
+
+setInterval(aggiorna,5000)
+
+</script>
+
+</body>
+</html>
